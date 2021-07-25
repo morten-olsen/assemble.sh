@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
 import { serialize } from 'next-mdx-remote/serialize'
+import Post from '../types/Post';
 
 const postsDirectory = path.join(process.cwd(), 'posts')
 
@@ -12,48 +13,40 @@ interface MatterData {
   image: string;
 }
 
-export function getSortedPostsData() {
-  const fileNames = fs.readdirSync(postsDirectory)
-  const allPostsData = fileNames.map(id => {
-    const fileName = path.join(id, 'index.mdx');
-    const fullPath = path.join(postsDirectory, fileName)
-    const fileContents = fs.readFileSync(fullPath, 'utf8')
-    const matterResult = matter(fileContents)
-    return {
-      id,
-      ...(matterResult.data as { date: string; title: string })
-    }
-  })
-  return allPostsData.sort((a, b) => {
-    if (a.date < b.date) {
-      return 1
-    } else {
-      return -1
-    }
-  })
-}
+export const getPost = async (id: string): Promise<Post> => {
+  const fullPath = path.join(postsDirectory, id, 'index.mdx')
+  const fileContents = fs.readFileSync(fullPath, 'utf8')
 
-export function getAllPostIds() {
+  const matterResult = matter(fileContents)
+  const content = await serialize(matterResult.content);
+
+  return {
+    id,
+    content,
+    ...(matterResult.data as MatterData)
+  }
+};
+
+export const getPostIds = async () => {
   const fileNames = fs.readdirSync(postsDirectory)
   return fileNames.map(fileName => {
     return {
       params: {
         id: fileName,
-      }
+      },
+    };
+  });
+};
+
+export const getSortedPosts = async () => {
+  const postIds = await getPostIds();
+  const posts = await Promise.all(postIds.map(id => getPost(id.params.id)));
+  return posts.sort((a, b) => {
+    if (a.date < b.date) {
+      return 1
+    } else {
+      return -1
     }
-  })
+  });
 }
 
-export async function getPostData(id: string) {
-  const fullPath = path.join(postsDirectory, id, 'index.mdx')
-  const fileContents = fs.readFileSync(fullPath, 'utf8')
-
-  const matterResult = matter(fileContents)
-  const source = await serialize(matterResult.content);
-
-  return {
-    id,
-    source,
-    ...(matterResult.data as MatterData)
-  }
-}

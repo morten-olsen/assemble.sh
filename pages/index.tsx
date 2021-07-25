@@ -1,8 +1,13 @@
 import Layout from '../components/Layout';
-import { getSortedPostsData } from '../lib/posts'
-import Link from 'next/link'
+import { getSortedPosts } from '../lib/posts'
 import { GetStaticProps } from 'next'
+import Post from '../types/Post';
+import PostListItem from '../components/posts/ListItem';
+import React from 'react';
 
+interface Props {
+  posts: Post[];
+}
 
 export const formatText = (input: string = '') => {
   return input.split('\n').map((item, index) => {
@@ -10,38 +15,22 @@ export const formatText = (input: string = '') => {
   })
 }
 
-export default function Home({
-  allPostsData
-}: {
-  allPostsData: {
-    date: string
-    title: string
-    id: string
-    summery: string
-  }[]
-}) {
-  return (
-    <Layout title="TEST!">
-      <ul>
-        {allPostsData.map(({ id, title, summery }) => (
-          <li key={id}>
-            <Link href={`/posts/${id}`}>
-              <a>{title}</a>
-            </Link>
-            <br />
-            <div>{formatText(summery)}</div>
-          </li>
-        ))}
-      </ul>
-    </Layout>
-  )
-}
+const Home: React.FC<Props> = ({ posts }) => (
+  <Layout title="TEST!">
+    {posts.map((post) => (
+      <PostListItem key={post.id} post={post} />
+    ))}
+  </Layout>
+);
 
-export const getStaticProps: GetStaticProps = async () => {
-  const allPostsData = getSortedPostsData();
+const getStaticProps: GetStaticProps = async () => {
+  const posts = await getSortedPosts();
   return {
     props: {
-      allPostsData
+      posts 
     }
   }
 }
+
+export { getStaticProps };
+export default Home;

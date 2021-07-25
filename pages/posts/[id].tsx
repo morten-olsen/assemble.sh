@@ -1,45 +1,43 @@
 import Layout from '../../components/Layout'
-import { getAllPostIds, getPostData } from '../../lib/posts'
+import { getPostIds, getPost } from '../../lib/posts'
 import { MDXRemote } from 'next-mdx-remote';
 import { GetStaticProps, GetStaticPaths } from 'next'
-import Image from 'next/image';
+import Post from '../../types/Post';
+import { H1, Overline } from '../../typography';
+import React from 'react';
 
-export default function Post({
-  postData
-}: {
-  postData: {
-    id: string;
-    title: string
-    date: string
-    source: any;
-  }
-}) {
+interface Props {
+  post: Post;
+}
+
+const PostView: React.FC<Props> = ({ post }) => {
   return (
-    <Layout title={postData.title}>
+    <Layout title={post.title}>
       <article>
-        <h1>{postData.title}</h1>
-        <div style={{ height: 500, position: 'relative' }}>
-          {/* <img src={require('/posts/' + postData.id + '/cover.png').default.src} /> */}
-        </div>
-        <MDXRemote {...postData.source} />
+        <Overline>{post.date}</Overline>
+        <H1>{post.title}</H1>
+        <MDXRemote {...post.content } />
       </article>
     </Layout>
   )
 }
 
-export const getStaticPaths: GetStaticPaths = async () => {
-  const paths = getAllPostIds()
+const getStaticPaths: GetStaticPaths = async () => {
+  const paths = await getPostIds()
   return {
     paths,
     fallback: false
   }
 }
 
-export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const postData = await getPostData(params.id as string)
+const getStaticProps: GetStaticProps = async ({ params }) => {
+  const post = await getPost(params.id as string);
   return {
     props: {
-      postData
+      post,
     }
   }
-} 
+};
+
+export { getStaticPaths, getStaticProps };
+export default PostView;

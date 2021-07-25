@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import Head from 'next/head'
 import styled, { createGlobalStyle } from 'styled-components';
-import Link from 'next/link';
+import Header from './Header';
 
 interface Props {
   title: string;
@@ -11,7 +11,7 @@ const GlobalStyle = createGlobalStyle`
   body {
     margin: 0;
     padding: 0;
-    font-family: 'Merriweather', serif;
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
     line-height: 1.8em;
     letter-spacing: 0.5px;
   }
@@ -35,8 +35,8 @@ const Layout: React.FC<Props> = ({ title, children }) => (
     <Head>
       <title>{title}</title>
     </Head>
+    <Header />
     <Content>
-      <Link href="/">Home</Link>
       {children}
     </Content>
   </>
