@@ -1,0 +1,55 @@
+---
+title: "Creating a Hyper-connected Framework (Part 1)"
+date: "2021-07-11"
+summery: "Part one of a series about creating a framework for connecting everything over any connection"
+image: "hyperconnect-part-1.png"
+---
+
+
+
+__This is part 1, which will focus on the principal behind the project. Stay tuned for part two where we will start to implement this in node.js__
+
+Hyper connectivity is about being available on multitude of different connections, you properly know someone who will call you on the phone, asking about the notes they shared on Slack in regards to the Teams meeting. This person is hyper connected. But what does being hyper connected mean for a series of silicon based devices?
+
+Well first we need to talk about Apple. So usually people can be categorized as an Apple Fanboy or an Apple hater. I my self am not outside of this polarized scale, but rather I am both at the same time! I hate the closed down ecosystem, and have time and time again tried to extradite myself from said ecosystem only to find my self getting drawn back in and doubling down. At the moment I have pretty much all category of Apple based devices; iPhone, iPad, MacBook, Apple Watch, Apple TV, Air Pods, Apple Pen and the list goes on.
+
+So why is it I keep coming back? Well it is about device inter connectivity. In Apple-land every device seems to just talk to every other device, regardless of its hardware. If it is registered to the same user, they simple just find a way to talk to each other, not fiddling around required.
+
+I have tried to mimic this in countless setups based around open source technologies, but while making two devices talk together is trivial with some time spend on setup, making any device just connect is not really something I have come across outside of the Apple ecosystem.
+
+This got me thinking; Why and how?
+
+## The why
+
+So why is this? Open source land is filled with talented developers, surely they should be able to make something like this work right?
+
+Well one issue is that a lot of the time for open source projects these are based on the current communication standards. A lot of the time HTTP. So HTTP allow one computer to connect to another and communicate over the HTTP protocol given that the caller knows the IP of the receiver. HTTP does not solve discoverability nor authentication so each project has to apply their own way of discovering a service (Usually entering a host name or an IP in a user interface) and a means of authentication (Usually a login prompt in a user interface).
+
+Both of those require interaction on the users part to establish a connection and isn’t really interchangeable between different applications using different discovery and authorization mechanisms.
+
+Standardized ways of device discovery such as mDNS/Avahi does exists, but usually only announce a service’s existence, and require that the application looking and the application found are of the same type.
+
+There also exists standardized ways of doing authorization, such as Open ID Connect, but it is an interactive login process by design, which if we just want our devices to connect, if owned by the same user, isn’t really going to solve our problem.
+
+## The how
+
+So can we create something that will create device hyper connectivity? Before we start, let’s define a few framework our solution should solve. I will also add a few requirements, not specified in the “why”, but should help ensure that our framework should be good and solid and work anywhere
+
+* Any already authenticated device should be able to connect to any device authenticated as the same user without requiring interaction.
+* All communication should be done with end-to-end encryption, and with secure handshaking.
+* Should be able to use different underlying transport mechanisms such as internet, Bluetooth LE etc.
+* Should be able to resume a dropped connection, or find an alternative connection to a device without packet loss.
+* Should be opaque to the developer using the framework. (Mimicking the API of using TCP listener and clients).
+
+And one last bonus requirement
+
+* Should be able to set up proxy chains between devices to traverse network incompatibility (As an example, if a Bluetooth LE device wants to connect to an internet only device it could use another device with both Bluetooth LE and internet as a bridge device for the connection.
+
+Okay, list of overly complicated tasks to completed: check.
+
+So in the next part we will start to create the foundation for all of this. But before we go, I’ll just lift the vial of one aspect of the technical implementation. I am going to be developing this in node.js using the Stream type. The reason I am using node.js’ Stream is that it has a lot of great build in features that is going to make this project a lot easier and it is the platform I am most familiar with (No reason to add further complexity by also trying to learn a new language).
+
+In the real world this should be build in a low level language and bound to higher level languages for the best performance and interoperability, as well as be made into a standardized format, so any platform not able to bind the the library directly could create a client native to the platform.
+
+But I think that it is for now, stay tuned for part two, when we are actually going to be playing around with some code!
+

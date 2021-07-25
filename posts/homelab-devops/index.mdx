@@ -1,0 +1,81 @@
+---
+title: "Homelabing, the DevOps way"
+date: "2021-07-25"
+---
+
+So I have a home lab, and through its existance it have been managed in pretty much every way imaginable. I have done virtualization with ESXi, XCP-NG, Proxmox, I have run dedicated docker hosts, i have run Docker Swarm and Kubernetes as HA setups with hyper convergence using Gluster on CephFS. I have used docker, docker-compose, kubectl, helm, ansible, rancher, portainer etc. for daily managment and setup tasks. So from the most bare metal setup to large (or as large as I could make it with the hardware I have) setups.
+
+One thing that has been a common thread between all these setups: Managing my homelab was a pain. Especially as I went for higher availability and an "easier"-to-use setup, the managerial pain increased. I felt like a System Administrator in my own home. Don't get me wrong, I have respect for the profession and I don't mind the odd SysAdm task now and again, but I prefer to experiment with the actual services instead of the underlaying metal.
+
+This is why I have decided to change tactics, and this post tries to explain this new approach and how you could use it in your own homelab setup, if you as me are tired of speending more time managing than developing og spinning up new interesting services.
+
+## No more HA
+
+Okay, this may be a weird path to go down, and this is most likely only a temorary path for me, but to get up and running I have decided that this time around I am not going to be focusing on high availability, but instead rely on an easy to setup and replicate setup with strong backup for restoring everything in case of a catastrofic failure. Therefor I am going to go with a single Docker node and just use host mounts for data storage. Later I will try to expand upon this using something like docker swarm or kubernetes along with hyper convergence, but atleast for now I want a simpler setup
+
+## Queue the DevOps approach
+
+As said, I am not a SysAdm, I am a developer, and therefor the DevOps approach is more near and dear to my heart, and the one I will be using for this new setup.
+
+I have been running Gitea to host some of my projects locally for a few years, and it is also what I am going to be using as configuration on project storage for this new setup. Additionally I need a CI/CD pipeline to build and deploy the projects that I host in my Gitea instance. For this perpose I will be using Drone CI with a Docker based runner.
+
+So that is basically it, nice and simple right? So the flow works like this:
+
+* Create a repo in Gitea
+* Enable builds on Drone CI for the new repo
+* Push the project along with a `.drone.yml` workflow file which will build and deploy the project
+
+## Setting up the system
+
+Okay so let us go through the initial setup. Not everythin can be automated, so it will require a few steps
+
+First clone or download the project repository from TODO
+
+Then we need to add in som environment variables. Create a `.env` file in the project with the follwing content (replace any values with your own)
+
+```
+EXTERNAL_DOMAIN=external.loopback.services
+INTERNAL_DOMAIN=internal.loopback.services
+DATA_LOCATION=./data
+CLOUDFLARE_TOKEN=some-token-here
+CLOUDFLARE_EMAIL=you@email.here
+```
+
+Okay we are ready to setup the first two components, the Gitea git server and the traefik load balancer for our web traffic
+
+```
+docker network create loadbalancer
+docker-compose -p traefik -f docker-compose-0.yml
+docker-compose -p gitea -f docker-compose-1.yml
+```
+
+Next we need to setup Drone with Gitea as the provider. The official documentation can be found [here](https://docs.drone.io/server/provider/gitea/)
+
+Navigate to `https://gitea.external.loopback.services/user/settings/applications`
+
+And create a new application with any name you choose and the login url as `https://drone.external.loopback.services`
+
+This will give you a client id and a secret which we will use in a second
+
+Next we need a shared key for drone and its workers. To create this we use the method propsed by the official documentation
+`openssl rand -hex 16` which will give us a random 16 charator secret
+
+We add these new information into our `.env` file below our existing values
+
+```
+GITEA_CLIENT_ID=92491bfe-26ae-464e-8d75-7b7632ecce05
+GITEA_CLIENT_SECRET=bx5vThgdfYRNqBV8rDGySyrZxeAuYaMXakXWm0IX6mM=
+DRONE_RPC_SECRET=7dde7b625f9dc30cd3a8fb8f1a614dcc
+DRONE_ADMIN=the-gitea-admin-user-name
+
+```
+
+Ready to rock!
+
+```
+docker-compose -p drone -f docker-compose-2.yml
+```
+
+Now go to `https://drone.external.loopback.services` and complete the setup
+
+Congratulation, setup is done! No more SysAdm, just DevOps from here

@@ -1,0 +1,6 @@
+/out
+/build
+/.next
+/node_modules
+/*.log
+/.*/
